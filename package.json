@@ -1,0 +1,22 @@
+{
+  "name": "twitch-win32dll",
+  "version": "1.0.0",
+  "description": "Twitch Bot Experiments",
+  "main": "bot.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carlpoole/twitch-win32dll.git"
+  },
+  "author": "Carl Poole",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/carlpoole/twitch-win32dll/issues"
+  },
+  "homepage": "https://github.com/carlpoole/twitch-win32dll#readme",
+  "dependencies": {
+    "websocket": "^1.0.34"
+  }
+}

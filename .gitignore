@@ -1,0 +1,10 @@
+# App secrets file
+#
+# This file should contain the following:
+#
+# exports.clientId = '<CLIENT ID>';
+# exports.accessId = '<USER ACCESS TOKEN>';
+secrets.js
+
+# Node modules
+node_modules/
