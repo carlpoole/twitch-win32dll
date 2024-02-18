@@ -38,26 +38,18 @@ client.on('connect', function connect(connection) {
     });
 
     // Process Messages
-
     connection.on('message', function(ircMessage) {
         if (ircMessage.type === 'utf8') {
             let rawIrcMessage = ircMessage.utf8Data.trimEnd();
             console.log(`Message received (${new Date().toISOString()}): '${rawIrcMessage}'\n`);
 
-            let messages = rawIrcMessage.split('\r\n');  // The IRC message may contain one or more messages.
+            let messages = rawIrcMessage.split('\r\n');
             messages.forEach(message => {
                 let parsedMessage = parseMessage(message);
             
                 if (parsedMessage) {
-                    // console.log(`Message command: ${parsedMessage.command.command}`);
-                    // console.log(`\n${JSON.stringify(parsedMessage, null, 3)}`)
-
                     switch (parsedMessage.command.command) {
                         case 'PRIVMSG':
-                            // Ignore all messages except the '!move' bot
-                            // command. A user can post a !move command to change the 
-                            // interval for when the bot posts its move message.
-
                             if ('subonly' === parsedMessage.command.botCommand) {
                                 if (admins.includes(parsedMessage.source.nick)) {
                                     subOnlyMode(true);
@@ -78,9 +70,7 @@ client.on('connect', function connect(connection) {
                             connection.sendUTF(`JOIN ${channel}`); 
                             break; 
                         case 'JOIN':
-                            // Send the initial move message. All other move messages are
-                            // sent by the timer.
-                            //connection.sendUTF(`PRIVMSG ${channel} :${moveMessage}`);
+                            // Joined
                             break;
                         case 'PART':
                             console.log('The channel must have banned (/ban) the bot.');
