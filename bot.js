@@ -87,6 +87,15 @@ client.on('connect', function connect(connection) {
                                 }
                             }
 
+                            if ('id' === parsedMessage.command.botCommand) {
+                                if (parsedMessage.command.botCommandParams) {
+                                    const targetUser = parsedMessage.command.botCommandParams.split(' ')[0];
+                                    getUserId(targetUser, connection);
+                                } else {
+                                    connection.sendUTF(`PRIVMSG ${channel} :${parsedMessage.source.nick} your user id is ${parsedMessage.tags['user-id']}`);
+                                }
+                            }
+
                             break;
                         case 'PING':
                             connection.sendUTF(`PONG ${parsedMessage.parameters}`);
@@ -218,6 +227,49 @@ async function subOnlyMode(enabled, connection) {
     .catch(error => {
         if (connection.readyState === WebSocket.OPEN) {
             connection.sendUTF(`PRIVMSG ${channel} :Couldn't set Sub Only mode to ${enabled}.`)
+        }
+        logError(error);
+    })
+}
+
+async function getUserId(username, connection) {
+    fetch(`https://api.twitch.tv/helix/users?login=${username}`, {
+        method: 'GET',
+        headers: {
+            'Client-ID': clientId,
+            'Authorization': `Bearer ${accessId}`
+        }
+    })
+    .then(response => {
+        if (response.status === 401) {
+            logError(`Problem getting user ID - Status code: ${response.status} - ${response.statusText}`);
+            log('Attempting token update...');
+
+            updateRefreshToken().then(result => {
+                if(result) {
+                    getUserId(username, connection);
+                    return false;
+                } else {
+                    logError('Token update failed. Exiting...');
+                    if (connection.readyState === WebSocket.OPEN) {
+                        connection.sendUTF(`PRIVMSG ${channel} :Sorry something bad happened. My people need me, I must go now.`);
+                    }
+                    connection.close();
+                    process.exit(1);
+                }
+            });
+        } else {
+            return response.json();
+        }
+    })
+    .then(data => {
+        if (data) {
+            connection.sendUTF(`PRIVMSG ${channel} :${username}'s user id is ${data.data[0].id}`);
+        }
+    })
+    .catch(error => {
+        if (connection.readyState === WebSocket.OPEN) {
+            connection.sendUTF(`PRIVMSG ${channel} :Couldn't get the user ID for ${username}.`)
         }
         logError(error);
     })
