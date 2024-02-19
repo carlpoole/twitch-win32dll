@@ -1,5 +1,6 @@
 const { logError, log, logLine } = require('./utils/logger');
 const { parseMessage } = require('./utils/parseMessage');
+const WebSocket = require('websocket');
 const WebSocketClient = require('websocket').client;
 
 const secretStore = require('data-store')({ path: process.cwd() + '/secrets.json' });
@@ -74,13 +75,13 @@ client.on('connect', function connect(connection) {
                         case 'PRIVMSG':
                             if ('subonly' === parsedMessage.command.botCommand) {
                                 if (admins.includes(parsedMessage.source.nick)) {
-                                    subOnlyMode(true);
+                                    subOnlyMode(true, connection);
                                 }
                             }
 
                             if ('freetheplebs' === parsedMessage.command.botCommand) {
                                 if (admins.includes(parsedMessage.source.nick)) {
-                                    subOnlyMode(false);
+                                    subOnlyMode(false, connection);
                                 }
                             }
 
@@ -127,8 +128,8 @@ client.on('connect', function connect(connection) {
 // Connect to Twitch IRC    
 client.connect('wss://irc-ws.chat.twitch.tv:443');
 
-function updateRefreshToken(connection) {
-    fetch('https://id.twitch.tv/oauth2/token', {
+async function updateRefreshToken(connection) {
+    return fetch('https://id.twitch.tv/oauth2/token', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded'
@@ -144,8 +145,10 @@ function updateRefreshToken(connection) {
         if (response.status !== 200) {
             logError(`Problem refreshing tokens - Status code: ${response.status} - ${response.statusText}`);
             logError('Make sure the secrets.json file contains a valid accessId and refreshToken. See the README for more information.');
-            log('\nShutting down...');
-            connection.close();
+            log('Shutting down...');
+            if(connection) {
+                connection.close();
+            }
             process.exit(1);
         } else {
             return response.json();
@@ -163,12 +166,17 @@ function updateRefreshToken(connection) {
         if(connection) {
             connection.close();
             client.connect('wss://irc-ws.chat.twitch.tv:443');
+        } else {
+            return true;
         }
     })
-    .catch(error => logError(error))
+    .catch(error => {
+        logError(error)
+        return false;
+    })
 }
 
-function subOnlyMode(enabled) {
+async function subOnlyMode(enabled, connection) {
     fetch('https://api.twitch.tv/helix/chat/settings?broadcaster_id=' + broadcasterId + '&moderator_id=' + moderatorId, {
         method: 'PATCH',
         headers: {
@@ -178,7 +186,37 @@ function subOnlyMode(enabled) {
         },
         body: JSON.stringify({ "subscriber_mode": enabled })
     })
-    .then(response => response.json())
-    .then(data => log(`Sub only mode ${enabled ? 'enabled' : 'disabled'}`))
-    .catch(error => logError(error))
+    .then(response => {
+        if (response.status === 401) {
+            logError(`Problem changing sub mode - Status code: ${response.status} - ${response.statusText}`);
+            log('Attempting token update...');
+
+            updateRefreshToken().then(result => {
+                if(result) {
+                    subOnlyMode(enabled, connection);
+                    return false;
+                } else {
+                    logError('Token update failed. Exiting...');
+                    if (connection.readyState === WebSocket.OPEN) {
+                        connection.sendUTF(`PRIVMSG ${channel} :Sorry something bad happened. My people need me, I must go now.`);
+                    }
+                    connection.close();
+                    process.exit(1);
+                }
+            });
+        } else {
+            return response.json();
+        }
+    })
+    .then(data => {
+        if (data) {
+            log(`Sub only mode ${enabled ? 'enabled' : 'disabled'}`)
+        }
+    })
+    .catch(error => {
+        if (connection.readyState === WebSocket.OPEN) {
+            connection.sendUTF(`PRIVMSG ${channel} :Couldn't set Sub Only mode to ${enabled}.`)
+        }
+        logError(error);
+    })
 }
