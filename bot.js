@@ -9,10 +9,11 @@ const clientSecret = secretStore.get('clientSecret');
 var accessId = secretStore.get('accessId');
 var refreshToken = secretStore.get('refreshToken');
 
-if (undefined === clientId || undefined === clientSecret ||  undefined === accessId || undefined === refreshToken) {
+const requiredSecretFields = [clientId, clientSecret, accessId, refreshToken];
+if(requiredSecretFields.some(field => field === undefined)) {
     logError('Missing clientId, clientSecret, accessId, or refreshToken in secrets.json');
     logError('See the README for more information on how to set up the secrets.json file.');
-    process.exit(1);S
+    process.exit(1);
 }
 
 const configStore = require('data-store')({ path: process.cwd() + '/config.json' });
@@ -22,7 +23,8 @@ const broadcasterId = configStore.get('channelId');
 const username = configStore.get('botUsername');
 const moderatorId = configStore.get('botUserId');
 
-if (undefined === admins || undefined === channel || undefined === broadcasterId || undefined === username || undefined === moderatorId) {
+const requiredConfigFields = [admins, channel, broadcasterId, username, moderatorId];
+if (requiredConfigFields.some(field => field === undefined)) {
     logError('Missing admins, channel, channelId, botUsername, or botUserId in config.json');
     logError('See the README for more information on how to set up the config.json file.');
     process.exit(1);
