@@ -38,4 +38,12 @@ Modify the config file with the desired options
 
 ## Run
 
-`node bot.js`
+```sh
+npm start
+```
+
+or
+
+```sh
+node bot.js
+```
