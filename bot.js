@@ -1,26 +1,32 @@
 const { parseMessage } = require('./parseMessage');
 const WebSocketClient = require('websocket').client;
 
-const store = require('data-store')({ path: process.cwd() + '/secrets.json' });
-const clientId = store.get('clientId');
-const clientSecret = store.get('clientSecret');
-var accessId = store.get('accessId');
-var refreshToken = store.get('refreshToken');
+const secretStore = require('data-store')({ path: process.cwd() + '/secrets.json' });
+const clientId = secretStore.get('clientId');
+const clientSecret = secretStore.get('clientSecret');
+var accessId = secretStore.get('accessId');
+var refreshToken = secretStore.get('refreshToken');
 
 if (undefined === clientId || undefined === clientSecret ||  undefined === accessId || undefined === refreshToken) {
     logError('Missing clientId, clientSecret, accessId, or refreshToken in secrets.json');
     logError('See the README for more information on how to set up the secrets.json file.');
+    process.exit(1);S
+}
+
+const configStore = require('data-store')({ path: process.cwd() + '/config.json' });
+const admins = configStore.get('admins');
+const channel = configStore.get('channel');
+const broadcasterId = configStore.get('channelId');
+const username = configStore.get('botUsername');
+const moderatorId = configStore.get('botUserId');
+
+if (undefined === admins || undefined === channel || undefined === broadcasterId || undefined === username || undefined === moderatorId) {
+    logError('Missing admins, channel, channelId, botUsername, or botUserId in config.json');
+    logError('See the README for more information on how to set up the config.json file.');
     process.exit(1);
 }
 
 const client = new WebSocketClient();
-
-const admins = ['realgametheory', 'win32dll'];
-
-const channel = '#realgametheory';
-const broadcasterId = '221896751';
-const username = 'win32dll';
-const moderatorId = '477920281';
 
 client.on('connectFailed', function(error) {
     logError('Connect Error - ' + error.toString());
@@ -148,8 +154,8 @@ function updateRefreshToken(connection) {
         // Uncomment to troubleshoot
         //log(data);
 
-        accessId = store.set('accessId', data.access_token).get('accessId');
-        refreshToken = store.set('refreshToken', data.refresh_token).get('refreshToken');
+        accessId = secretStore.set('accessId', data.access_token).get('accessId');
+        refreshToken = secretStore.set('refreshToken', data.refresh_token).get('refreshToken');
         log(`Refreshed and saved tokens`);
 
         // If websocket issue caused the refresh, reconnect to Twitch IRC
