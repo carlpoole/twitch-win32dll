@@ -3,7 +3,7 @@ const { parseMessage } = require('./utils/parseMessage');
 const WebSocket = require('websocket');
 const WebSocketClient = require('websocket').client;
 
-const secretStore = require('data-store')({ path: process.cwd() + '/secrets.json' });
+const secretStore = require('data-store')({ path: `${process.cwd()}/secrets.json` });
 const clientId = secretStore.get('clientId');
 const clientSecret = secretStore.get('clientSecret');
 var accessId = secretStore.get('accessId');
@@ -16,7 +16,7 @@ if(requiredSecretFields.some(field => field === undefined)) {
     process.exit(1);
 }
 
-const configStore = require('data-store')({ path: process.cwd() + '/config.json' });
+const configStore = require('data-store')({ path: `${process.cwd()}/config.json` });
 const admins = configStore.get('admins');
 const channel = configStore.get('channel');
 const broadcasterId = configStore.get('channelId');
@@ -33,7 +33,7 @@ if (requiredConfigFields.some(field => field === undefined)) {
 const client = new WebSocketClient();
 
 client.on('connectFailed', function(error) {
-    logError('Connect Error - ' + error.toString());
+    logError(`Connect Error - ${error.toString()}`);
 });
 
 client.on('connect', function connect(connection) {
@@ -46,7 +46,7 @@ client.on('connect', function connect(connection) {
     connection.sendUTF(`JOIN ${channel}`);
 
     connection.on('error', function(error) {
-        log("Connection Error: " + error.toString());
+        log(`Connection Error - ${error.toString()}`);
     });
 
     connection.on('close', function() {
@@ -89,7 +89,7 @@ client.on('connect', function connect(connection) {
 
                             break;
                         case 'PING':
-                            connection.sendUTF('PONG ' + parsedMessage.parameters);
+                            connection.sendUTF(`PONG ${parsedMessage.parameters}`);
                             break;
                         case '001':
                             // Successfully logged in, so join the channel.
@@ -179,11 +179,11 @@ async function updateRefreshToken(connection) {
 }
 
 async function subOnlyMode(enabled, connection) {
-    fetch('https://api.twitch.tv/helix/chat/settings?broadcaster_id=' + broadcasterId + '&moderator_id=' + moderatorId, {
+    fetch(`https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}`, {
         method: 'PATCH',
         headers: {
             'Client-ID': clientId,
-            'Authorization': 'Bearer ' + accessId,
+            'Authorization': `Bearer ${accessId}`,
             'Content-Type': 'application/json',
         },
         body: JSON.stringify({ "subscriber_mode": enabled })
