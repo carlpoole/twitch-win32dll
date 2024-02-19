@@ -42,7 +42,7 @@ client.on('connect', function connect(connection) {
     connection.sendUTF(`CAP REQ :twitch.tv/tags twitch.tv/commands twitch.tv/membership`);
     connection.sendUTF(`PASS oauth:${accessId}`);
     connection.sendUTF(`NICK ${username}`);
-  
+
     connection.sendUTF(`JOIN ${channel}`);
 
     connection.on('error', function(error) {
@@ -66,7 +66,7 @@ client.on('connect', function connect(connection) {
             let messages = rawIrcMessage.split('\r\n');
             messages.forEach(message => {
                 let parsedMessage = parseMessage(message);
-            
+
                 if (parsedMessage) {
                     // Log all chat messages
                     if (parsedMessage.source && parsedMessage.source.nick && parsedMessage.parameters) {
@@ -148,120 +148,72 @@ client.on('connect', function connect(connection) {
 client.connect('wss://irc-ws.chat.twitch.tv:443');
 
 async function updateRefreshToken(connection) {
-    const response = await fetch('https://id.twitch.tv/oauth2/token', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded'
-        },
-        body: new URLSearchParams({
-            'client_id': clientId,
-            'client_secret': clientSecret,
-            'grant_type': 'refresh_token',
-            'refresh_token': refreshToken
+    try {
+        const response = await fetch('https://id.twitch.tv/oauth2/token', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded'
+            },
+            body: new URLSearchParams({
+                'client_id': clientId,
+                'client_secret': clientSecret,
+                'grant_type': 'refresh_token',
+                'refresh_token': refreshToken
+            })
         })
-    })
 
-    if (response.error) {
-        logError(error)
-        return false;
-    }
+        if (response.status !== 200) {
+            logError(`Problem refreshing tokens - Status code: ${response.status} - ${response.statusText}`);
+            logError('Make sure the secrets.json file contains a valid accessId and refreshToken. See the README for more information.');
+            log('Shutting down...');
 
-    if (response.status !== 200) {
-        logError(`Problem refreshing tokens - Status code: ${response.status} - ${response.statusText}`);
-        logError('Make sure the secrets.json file contains a valid accessId and refreshToken. See the README for more information.');
-        log('Shutting down...');
+            if(connection) {
+                connection.close();
+            }
 
-        if(connection) {
-            connection.close();
+            process.exit(1);
         }
 
-        process.exit(1);
-    }
+        // Uncomment to troubleshoot
+        //log(data);
+        const data = await response.json();
 
-    // Uncomment to troubleshoot
-    //log(data);
-    const data = await response.json();
+        accessId = secretStore.set('accessId', data.access_token).get('accessId');
+        refreshToken = secretStore.set('refreshToken', data.refresh_token).get('refreshToken');
+        log(`Refreshed and saved tokens`);
 
-    accessId = secretStore.set('accessId', data.access_token).get('accessId');
-    refreshToken = secretStore.set('refreshToken', data.refresh_token).get('refreshToken');
-    log(`Refreshed and saved tokens`);
-
-    // If websocket issue caused the refresh, reconnect to Twitch IRC
-    if(connection) {
-        connection.close();
-        client.connect('wss://irc-ws.chat.twitch.tv:443');
-    } else {
-        return true;
+        // If websocket issue caused the refresh, reconnect to Twitch IRC
+        if(connection) {
+            connection.close();
+            client.connect('wss://irc-ws.chat.twitch.tv:443');
+        } else {
+            return true;
+        }
+    } catch (error) {
+        logError(error)
+        return false;
     }
 }
 
 async function subOnlyMode(enabled, connection) {
-    const response = await fetch(`https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}`, {
-        method: 'PATCH',
-        headers: {
-            'Client-ID': clientId,
-            'Authorization': `Bearer ${accessId}`,
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ "subscriber_mode": enabled })
-    })
+    try {
+        const response = await fetch(`https://api.twitch.tv/helix/chat/settings?broadcaster_id=${broadcasterId}&moderator_id=${moderatorId}`, {
+            method: 'PATCH',
+            headers: {
+                'Client-ID': clientId,
+                'Authorization': `Bearer ${accessId}`,
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ "subscriber_mode": enabled })
+        })
 
-    if (response.error) {
-        if (connection.readyState === WebSocket.OPEN) {
-            connection.sendUTF(`PRIVMSG ${channel} :Couldn't set Sub Only mode to ${enabled}.`)
-        }
+        if (response.status === 401) {
+            logError(`Problem changing sub mode - Status code: ${response.status} - ${response.statusText}`);
+            log('Attempting token update...');
 
-        logError(error);
-    }
-
-    if (response.status === 401) {
-        logError(`Problem changing sub mode - Status code: ${response.status} - ${response.statusText}`);
-        log('Attempting token update...');
-
-        const result = await updateRefreshToken(connection);
-        if(result) {
-            subOnlyMode(enabled, connection);
-            return false;
-        } else {
-            logError('Token update failed. Exiting...');
-            if (connection.readyState === WebSocket.OPEN) {
-                connection.sendUTF(`PRIVMSG ${channel} :Sorry something bad happened. My people need me, I must go now.`);
-            }
-            connection.close();
-            process.exit(1);
-        }
-    }
-
-    const data = await response.json();
-    if (data) {
-        log(`Sub only mode ${enabled ? 'enabled' : 'disabled'}`)
-    }
-}
-
-async function getUserId(username, connection) {
-    const response = await fetch(`https://api.twitch.tv/helix/users?login=${username}`, {
-        method: 'GET',
-        headers: {
-            'Client-ID': clientId,
-            'Authorization': `Bearer ${accessId}`
-        }
-    })
-
-    if (response.error) {
-        if (connection.readyState === WebSocket.OPEN) {
-            connection.sendUTF(`PRIVMSG ${channel} :Couldn't get the user ID for ${username}.`)
-        }
-
-        logError(error);
-    }
-
-    if (response.status === 401) {
-        logError(`Problem getting user ID - Status code: ${response.status} - ${response.statusText}`);
-        log('Attempting token update...');
-
-        updateRefreshToken().then(result => {
+            const result = await updateRefreshToken(connection);
             if(result) {
-                getUserId(username, connection);
+                subOnlyMode(enabled, connection);
                 return false;
             } else {
                 logError('Token update failed. Exiting...');
@@ -271,11 +223,59 @@ async function getUserId(username, connection) {
                 connection.close();
                 process.exit(1);
             }
-        });
-    }
+        }
 
-    const data = await response.json();
-    if (data) {
-        connection.sendUTF(`PRIVMSG ${channel} :${username}'s user id is ${data.data[0].id}`);
+        const data = await response.json();
+        if (data) {
+            log(`Sub only mode ${enabled ? 'enabled' : 'disabled'}`)
+        }
+    } catch (error) {
+        if (connection.readyState === WebSocket.OPEN) {
+            connection.sendUTF(`PRIVMSG ${channel} :Couldn't set Sub Only mode to ${enabled}.`)
+        }
+
+        logError(error);
+    }
+}
+
+async function getUserId(username, connection) {
+    try {
+        const response = await fetch(`https://api.twitch.tv/helix/users?login=${username}`, {
+            method: 'GET',
+            headers: {
+                'Client-ID': clientId,
+                'Authorization': `Bearer ${accessId}`
+            }
+        })
+
+        if (response.status === 401) {
+            logError(`Problem getting user ID - Status code: ${response.status} - ${response.statusText}`);
+            log('Attempting token update...');
+
+            updateRefreshToken().then(result => {
+                if(result) {
+                    getUserId(username, connection);
+                    return false;
+                } else {
+                    logError('Token update failed. Exiting...');
+                    if (connection.readyState === WebSocket.OPEN) {
+                        connection.sendUTF(`PRIVMSG ${channel} :Sorry something bad happened. My people need me, I must go now.`);
+                    }
+                    connection.close();
+                    process.exit(1);
+                }
+            });
+        }
+
+        const data = await response.json();
+        if (data) {
+            connection.sendUTF(`PRIVMSG ${channel} :${username}'s user id is ${data.data[0].id}`);
+        }
+    } catch (error) {
+        if (connection.readyState === WebSocket.OPEN) {
+            connection.sendUTF(`PRIVMSG ${channel} :Couldn't get the user ID for ${username}.`)
+        }
+
+        logError(error);
     }
 }
