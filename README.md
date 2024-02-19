@@ -35,3 +35,7 @@ Modify the config file with the desired options
 | botUsername  | `win32dll`                       | the username of the bot user                                                                                                                            |
 | botUserId    | `477920281`                      | the numeric ID of the bot user. Use the Twitch API to get the ID or a tool like <https://streamscharts.com/tools/convert-username>                      |
 | admins       | `["realgametheory", "win32dll"]` | an array of twitch usernames who should have permissions to use mod commands                                                                            |
+
+## Run
+
+`node bot.js`
