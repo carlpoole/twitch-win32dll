@@ -1,7 +1,7 @@
 # twitch-win32dll
-Twitch Bot Experiments
+My Twitch Bot
 
-This is the framework for a simple bot that listens to chat messages and responds with what I want.
+This is a simple bot that listens to chat messages and responds with what I want.
 
 ## Required Secrets File
 
