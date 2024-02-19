@@ -1,12 +1,12 @@
-function logError(error) {
+export function logError(error) {
     console.error(`[${date()}]: Error: ${error}`);
 }
 
-function log(message) {
+export function log(message) {
     console.log(`[${date()}]: ${message}`);
 }
 
-function logLine() {
+export function logLine() {
     console.log('----------------------------------------');
 }
 
@@ -16,9 +16,3 @@ function date() {
         timeStyle: 'long'
       }).format(new Date())
 }
-
-module.exports = {
-    logError,
-    log,
-    logLine,
-};

@@ -1,4 +1,4 @@
-const { logError, log, logLine } = require('./logger');
+import { log } from './logger.js';
 
 // Parses an IRC message and returns a JSON object with the message's 
 // component parts (tags, source (nick and host), command, parameters). 
@@ -76,7 +76,8 @@ function parseMessage(message) {
 
     return parsedMessage;
 }
-exports.parseMessage = parseMessage;
+const _parseMessage = parseMessage;
+export { _parseMessage as parseMessage };
 // Parses the tags component of the IRC message.
 function parseTags(tags) {
     // badge-info=;badges=broadcaster/1;color=#0000FF;...
@@ -167,7 +168,7 @@ function parseTags(tags) {
 // Parses the command component of the IRC message.
 function parseCommand(rawCommandComponent) {
     let parsedCommand = null;
-    commandParts = rawCommandComponent.split(' ');
+    let commandParts = rawCommandComponent.split(' ');
 
     switch (commandParts[0]) {
         case 'JOIN':

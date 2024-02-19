@@ -1,9 +1,11 @@
-const { logError, log, logLine } = require('./utils/logger');
-const { parseMessage } = require('./utils/parseMessage');
-const WebSocket = require('websocket');
-const WebSocketClient = require('websocket').client;
+import { logError, log, logLine } from './utils/logger.js';
+import { parseMessage } from './utils/parseMessage.js';
+import DataStore from 'data-store';
+import pkg from 'websocket';
+const { OPEN } = pkg;
+const { client: WebSocketClient } = pkg;
 
-const secretStore = require('data-store')({ path: `${process.cwd()}/secrets.json` });
+const secretStore = new DataStore({ path: `${process.cwd()}/secrets.json` });
 const clientId = secretStore.get('clientId');
 const clientSecret = secretStore.get('clientSecret');
 let accessId = secretStore.get('accessId');
@@ -16,7 +18,7 @@ if(requiredSecretFields.some(field => field === undefined)) {
     process.exit(1);
 }
 
-const configStore = require('data-store')({ path: `${process.cwd()}/config.json` });
+const configStore = new DataStore({ path: `${process.cwd()}/config.json` });
 const admins = configStore.get('admins');
 const channel = configStore.get('channel');
 const broadcasterId = configStore.get('channelId');
@@ -217,7 +219,7 @@ async function subOnlyMode(enabled, connection) {
                 return false;
             } else {
                 logError('Token update failed. Exiting...');
-                if (connection.readyState === WebSocket.OPEN) {
+                if (connection.readyState === OPEN) {
                     connection.sendUTF(`PRIVMSG ${channel} :Sorry something bad happened. My people need me, I must go now.`);
                 }
                 connection.close();
@@ -230,7 +232,7 @@ async function subOnlyMode(enabled, connection) {
             log(`Sub only mode ${enabled ? 'enabled' : 'disabled'}`)
         }
     } catch (error) {
-        if (connection.readyState === WebSocket.OPEN) {
+        if (connection.readyState === OPEN) {
             connection.sendUTF(`PRIVMSG ${channel} :Couldn't set Sub Only mode to ${enabled}.`)
         }
 
@@ -258,7 +260,7 @@ async function getUserId(username, connection) {
                     return false;
                 } else {
                     logError('Token update failed. Exiting...');
-                    if (connection.readyState === WebSocket.OPEN) {
+                    if (connection.readyState === OPEN) {
                         connection.sendUTF(`PRIVMSG ${channel} :Sorry something bad happened. My people need me, I must go now.`);
                     }
                     connection.close();
@@ -272,7 +274,7 @@ async function getUserId(username, connection) {
             connection.sendUTF(`PRIVMSG ${channel} :${username}'s user id is ${data.data[0].id}`);
         }
     } catch (error) {
-        if (connection.readyState === WebSocket.OPEN) {
+        if (connection.readyState === OPEN) {
             connection.sendUTF(`PRIVMSG ${channel} :Couldn't get the user ID for ${username}.`)
         }
 
