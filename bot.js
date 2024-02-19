@@ -1,4 +1,5 @@
-const { parseMessage } = require('./parseMessage');
+const { logError, log, logLine } = require('./utils/logger');
+const { parseMessage } = require('./utils/parseMessage');
 const WebSocketClient = require('websocket').client;
 
 const secretStore = require('data-store')({ path: process.cwd() + '/secrets.json' });
@@ -180,16 +181,4 @@ function subOnlyMode(enabled) {
     .then(response => response.json())
     .then(data => log(`Sub only mode ${enabled ? 'enabled' : 'disabled'}`))
     .catch(error => logError(error))
-}
-
-function logError(error) {
-    console.error(`[${new Date().toISOString()}]: Error: ${error}`);
-}
-
-function log(message) {
-    console.log(`[${new Date().toISOString()}]: ${message}`);
-}
-
-function logLine() {
-    console.log('----------------------------------------');
 }

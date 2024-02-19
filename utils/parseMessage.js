@@ -1,3 +1,5 @@
+const { logError, log, logLine } = require('./logger');
+
 // Parses an IRC message and returns a JSON object with the message's 
 // component parts (tags, source (nick and host), command, parameters). 
 // Expects the caller to pass a single message. (Remember, the Twitch 
@@ -206,13 +208,13 @@ function parseCommand(rawCommandComponent) {
             };
             break;
         case 'RECONNECT':
-            console.log(`[${new Date().toISOString()}]: The Twitch IRC server is about to terminate the connection for maintenance.`);
+            log(`The Twitch IRC server is about to terminate the connection for maintenance.`);
             parsedCommand = {
                 command: commandParts[0]
             };
             break;
         case '421':
-            console.log(`[${new Date().toISOString()}]: Unsupported IRC command: ${commandParts[2]}`);
+            log(`Unsupported IRC command - ${commandParts[2]}`);
             return null;
         case '001': // Logged in (successfully authenticated). 
             parsedCommand = {
@@ -228,10 +230,10 @@ function parseCommand(rawCommandComponent) {
         case '372':
         case '375':
         case '376':
-            //console.log(`[${new Date().toISOString()}]: Numeric message ${commandParts[0]}`);
+            //log(`Numeric message ${commandParts[0]}`);
             return null;
         default:
-            console.log(`[${new Date().toISOString()}]: Unexpected command: ${commandParts[0]}\n`);
+            log(`Unexpected command - ${commandParts[0]}\n`);
             return null;
     }
 
