@@ -75,6 +75,14 @@ client.on('connect', function connect(connection) {
 
                     switch (parsedMessage.command.command) {
                         case 'PRIVMSG':
+                            if ('kill' === parsedMessage.command.botCommand) {
+                                if (admins.includes(parsedMessage.source.nick)) {
+                                    connection.sendUTF(`PRIVMSG ${channel} :My people need me, I must go now.`);
+                                    connection.close();
+                                    process.exit(1);
+                                }
+                            }
+
                             if ('subonly' === parsedMessage.command.botCommand) {
                                 if (admins.includes(parsedMessage.source.nick)) {
                                     subOnlyMode(true, connection);
