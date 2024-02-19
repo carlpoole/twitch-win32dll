@@ -28,8 +28,10 @@ then enter the required results in `./secrets.json`
 
 Modify the config file with the desired options
 
-- channel: the username of the channel you want the bot to connect to, preceeded by a hashtag. E.G: `#realgametheory`
-- channelId: the numeric ID of the channel you want the bot to connect to. Use the Twitch API to get the ID or a tool like https://streamscharts.com/tools/convert-username
-- botUsername: the username of the bot user. E.G: win32dll
-- botUserId: the numeric ID of the bot user. Use the Twitch API to get the ID or a tool like https://streamscharts.com/tools/convert-username
-- admins: an array of twitch usernames who should have permissions to use mod commands. E.G: ["realgametheory", "win32dll"]
+| Field         | Description                                                                                                                                                     |
+|---------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| channel       | the username of the channel you want the bot to connect to, preceded by a hashtag. E.G: `#realgametheory`                                                       |
+| channelId     | the numeric ID of the channel you want the bot to connect to. Use the Twitch API to get the ID or a tool like <https://streamscharts.com/tools/convert-username> |
+| botUsername   | the username of the bot user. E.G: win32dll                                                                                                                     |
+| botUserId     | the numeric ID of the bot user. Use the Twitch API to get the ID or a tool like <https://streamscharts.com/tools/convert-username>                               |
+| admins        | an array of twitch usernames who should have permissions to use mod commands. E.G: ["realgametheory", "win32dll"]                                                |
