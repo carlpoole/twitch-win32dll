@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/carlpoole/twitch-win32dll#readme",
   "dependencies": {
+    "data-store": "^4.0.3",
     "websocket": "^1.0.34"
   }
 }

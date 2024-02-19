@@ -206,13 +206,13 @@ function parseCommand(rawCommandComponent) {
             };
             break;
         case 'RECONNECT':
-            console.log('The Twitch IRC server is about to terminate the connection for maintenance.');
+            console.log(`[${new Date().toISOString()}]: The Twitch IRC server is about to terminate the connection for maintenance.`);
             parsedCommand = {
                 command: commandParts[0]
             };
             break;
         case '421':
-            console.log(`Unsupported IRC command: ${commandParts[2]}`);
+            console.log(`[${new Date().toISOString()}]: Unsupported IRC command: ${commandParts[2]}`);
             return null;
         case '001': // Logged in (successfully authenticated). 
             parsedCommand = {
@@ -228,10 +228,10 @@ function parseCommand(rawCommandComponent) {
         case '372':
         case '375':
         case '376':
-            console.log(`numeric message: ${commandParts[0]}`);
+            //console.log(`[${new Date().toISOString()}]: Numeric message ${commandParts[0]}`);
             return null;
         default:
-            console.log(`\nUnexpected command: ${commandParts[0]}\n`);
+            console.log(`[${new Date().toISOString()}]: Unexpected command: ${commandParts[0]}\n`);
             return null;
     }
 
