@@ -6,8 +6,8 @@ const WebSocketClient = require('websocket').client;
 const secretStore = require('data-store')({ path: `${process.cwd()}/secrets.json` });
 const clientId = secretStore.get('clientId');
 const clientSecret = secretStore.get('clientSecret');
-var accessId = secretStore.get('accessId');
-var refreshToken = secretStore.get('refreshToken');
+let accessId = secretStore.get('accessId');
+let refreshToken = secretStore.get('refreshToken');
 
 const requiredSecretFields = [clientId, clientSecret, accessId, refreshToken];
 if(requiredSecretFields.some(field => field === undefined)) {
